@@ -89,20 +89,21 @@ languagecode='de-DE' # German
 helptext=$'
 usage: polly <text>
       where text is a string that is parsed and then spoken
-usage: polly -i inputfile -t texttype -v voice -l language -k -d
-      where inputfile contains the text texttype
-            texttype (text/ssml) specifies text (default) vs ssml
-            voice specifies the voice
-            engine specifies the engine (standard/neural)
-            language specifies the engine 
-            e.g. de-DE, en-US, en-GB or simplified en, de, in, au
-            -k specifies to keep the speech file
-            -d prodcues some debugging output'
+usage: polly [-i inputfile] [-t texttype] [-v voice] [-l language] [-L lexicon-names] [-k] [-d]
+      where inputfile contains the text texttype (also --inputfile)
+            texttype (text/ssml) specifies text (default) vs ssml (also --texttype)
+            voice specifies the voice (also --voice)
+            engine specifies the engine (standard/neural) (also --engine)
+            lexicon-names sopecifies the lexicon names (also --lexi or --lexicon-names)
+            language specifies the engine  (also --language)
+                e.g. de-DE, en-US, en-GB or simplified en, de, in, au
+            -k specifies to keep the speech file (also --keep)
+            -d prodcues some debugging output (also --debug)'
 
 
 
 
-# uncomment the next kine to get debug output
+# uncomment the next line to get debug output
 # debug="true"
 
 # Param check
@@ -120,6 +121,7 @@ case $1 in
   -i|--input) inputfile="$2"; shift;;
   -t|--texttype) ttype="$2"; shift;;
   -v|--voice) voice="$2"; shift;;
+  -L|--lexi|--lexicon-names) lexicons="$2"; shift;;
   -e|--engine) engine="$2"; shift;;
   -l|--language) languagecode="$2"; shift;;
   -k|--keep) keep="true";;
@@ -209,15 +211,33 @@ then
     echo 'engine:' "$engine"
     echo 'text-type:' "$ttype"
     echo 'language:' "$languagecode"
+    echo 'lexicons:' "$lexicons"
     echo 'file:' "$pollyfile"
 fi
 
-aws polly synthesize-speech --output-format mp3 --text "$text" --language-code $languagecode --voice-id $voice --engine $engine --text-type $ttype $pollyfile
+aws polly synthesize-speech --output-format mp3 --text "$text" --language-code $languagecode --lexicon-names $lexicons --voice-id $voice --engine $engine --text-type $ttype $pollyfile
+
+# Check result
+
+aws_return_code=$?
+
+if [ $aws_return_code -eq 0 ]
+then
+    if [ $debug ]
+    then
+        echo Success: call to polly successful
+    fi
+else
+    echo Error: call to polly failed
+    exit $aws_return_code
+fi
+
+# Play soundfile
 
 if [ -f $pollyfile ]
 then 
     afplay $pollyfile
-    if [ ! keep ]
+    if [ ! $keep ]
     then
         rm $pollyfile
     else
@@ -233,7 +253,8 @@ exit
 
 # Backlog
 # need to check inputs of engine, voice and ttype for validity
-# 
+# Make pollyfile a hash of input paramaters - consider adding then date/time
+# at the same time add a -c/--cleanup paramater that will remove all *mp3 files from the folder
 
 
 
