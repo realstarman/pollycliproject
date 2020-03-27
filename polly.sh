@@ -5,8 +5,14 @@
 # for instructions on how to set this up
 
 #instructions: 
-# 1. Create or appoint a directory for you temp speech file and choose a name. Then put it into this variable
+# 1. Create or appoint a directory for you temp speech file and choose a name. Then put it into these variables
 pollyfile="$HOME/polly/speech.mp3"
+pollydir="$HOME/polly/"
+
+# calculkate the hash value comment out, if yiou don#t want this feature
+pfilename="$( echo -n $* | md5 )"
+pollyfile=$pollydir$pfilename".mp3"
+echo $pollyfile2
 
 # 2. select a voice - only one!!!
 
