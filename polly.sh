@@ -8,7 +8,7 @@
 # 1. Create or appoint a directory for you temp speech file and choose a name. Then put it into this variable
 pollyfile="$HOME/polly/speech.mp3"
 
-# 2. select a voicxe - no need one!!!
+# 2. select a voice - only one!!!
 
 # voice='Aditi
 # voice='Amy
