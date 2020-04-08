@@ -12,7 +12,7 @@ pollydir="$HOME/polly/"
 # calculkate the hash value comment out, if yiou don#t want this feature
 pfilename="$( echo -n $* | md5 )"
 pollyfile=$pollydir$pfilename".mp3"
-echo $pollyfile2
+
 
 # 2. select a voice - only one!!!
 
@@ -95,7 +95,7 @@ languagecode='de-DE' # German
 helptext=$'
 usage: polly <text>
       where text is a string that is parsed and then spoken
-usage: polly [-i inputfile] [-t texttype] [-v voice] [-l language] [-L lexicon-names] [-k] [-d]
+usage: polly [-i inputfile] [-t texttype] [-v voice] [-l language] [-L lexicon-names] [-k] [-d] [-c]
       where inputfile contains the text texttype (also --inputfile)
             texttype (text/ssml) specifies text (default) vs ssml (also --texttype)
             voice specifies the voice (also --voice)
@@ -104,7 +104,10 @@ usage: polly [-i inputfile] [-t texttype] [-v voice] [-l language] [-L lexicon-n
             language specifies the engine  (also --language)
                 e.g. de-DE, en-US, en-GB or simplified en, de, in, au
             -k specifies to keep the speech file (also --keep)
-            -d prodcues some debugging output (also --debug)'
+            -d produces some debugging output (also --debug)
+            -c cleans the mp3 folder from mp3 files (also --clean or --cleanup)
+               Cleanup is overriden by -k'
+            
 
 
 
@@ -133,6 +136,7 @@ case $1 in
   -k|--keep) keep="true";;
   -d|--debug) debug="true";;
   -h|--help) help="true";;
+  -c|--clean|--cleanup) cleanup="true";;
   *) text="$1";;
 esac; shift
 done
@@ -217,8 +221,25 @@ then
     echo 'engine:' "$engine"
     echo 'text-type:' "$ttype"
     echo 'language:' "$languagecode"
-    echo 'lexicons:' "$lexicons"
+    echo 'lexicons:' "$lexicons"    
     echo 'file:' "$pollyfile"
+    if [ $cleanup ]
+    then
+        echo "cleanup files!"
+    fi
+    if [ $keep ]
+    then
+        echo "keep files!"
+    fi
+
+fi
+
+
+# Check whether cleanup and keep are set. If yes, keep overrides cleanup
+if [ $cleanup ] && [ $keep ]
+then
+    unset cleanup
+    echo "--keep option overrides --cleanup"
 fi
 
 aws polly synthesize-speech --output-format mp3 --text "$text" --language-code $languagecode --lexicon-names $lexicons --voice-id $voice --engine $engine --text-type $ttype $pollyfile
@@ -251,6 +272,16 @@ then
     fi
 fi
 
+if [ $cleanup ]
+then
+    if [ $debug ]
+    then
+        echo Cleaning up $pollydir
+    fi
+
+    rm $pollydir*.mp3
+fi
+
 exit
 
 
@@ -259,8 +290,8 @@ exit
 
 # Backlog
 # need to check inputs of engine, voice and ttype for validity
-# Make pollyfile a hash of input paramaters - consider adding then date/time
-# at the same time add a -c/--cleanup paramater that will remove all *mp3 files from the folder
+# Done: Make pollyfile a hash of input paramaters - consider adding then date/time
+# Done: at the same time add a -c/--cleanup parameter that will remove all *mp3 files from the folder
 
 
 
