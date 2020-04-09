@@ -191,8 +191,18 @@ fi
 # text - check
 if [ -z "$text" ]
 then
-    echo "Error: No text or inputfile specified!"
-    exit 1
+    if [ $cleanup ]
+    then
+        # Just do cleanup
+        nospeech="true"
+        # keep doesn't make sense here
+        unset keep
+        echo "No text or inputfile specified, just performing cleanup"
+    else
+        echo "Error: No text or inputfile specified!"
+        echo "       use polly -h for more info!"
+        exit 1
+    fi
     
 fi
 
@@ -242,33 +252,35 @@ then
     echo "--keep option overrides --cleanup"
 fi
 
-aws polly synthesize-speech --output-format mp3 --text "$text" --language-code $languagecode --lexicon-names $lexicons --voice-id $voice --engine $engine --text-type $ttype $pollyfile
-
-# Check result
-
-aws_return_code=$?
-
-if [ $aws_return_code -eq 0 ]
+if [ ! $nospeech ]
 then
-    if [ $debug ]
+    aws polly synthesize-speech --output-format mp3 --text "$text" --language-code $languagecode --lexicon-names $lexicons --voice-id $voice --engine $engine --text-type $ttype $pollyfile
+    # Check result
+
+    aws_return_code=$?
+
+    if [ $aws_return_code -eq 0 ]
     then
-        echo Success: call to polly successful
+        if [ $debug ]
+        then
+            echo Success: call to polly successful
+        fi
+        else
+            echo Error: call to polly failed
+        exit $aws_return_code
     fi
-else
-    echo Error: call to polly failed
-    exit $aws_return_code
-fi
 
-# Play soundfile
+    # Play soundfile
 
-if [ -f $pollyfile ]
-then 
-    afplay $pollyfile
-    if [ ! $keep ]
-    then
-        rm $pollyfile
-    else
-        echo Output: $pollyfile
+    if [ -f $pollyfile ]
+    then 
+        afplay $pollyfile
+        if [ ! $keep ]
+        then
+            rm $pollyfile
+        else
+            echo Output: $pollyfile
+        fi
     fi
 fi
 
